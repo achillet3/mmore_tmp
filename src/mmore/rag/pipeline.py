@@ -86,14 +86,12 @@ class RAGPipeline:
     @staticmethod
     # TODO: Add non RAG Pipeline (i.e. retriever is None)
     def _build_chain(retriever, format_docs, prompt, llm) -> Chain:
-        structured_llm = llm
-        # structured_llm = llm.with_structured_output(CitedAnswer)
-        # structured_llm = llm.with_structured_output(QuotedAnswer)
+        # Use structured output with CitedAnswer
+        structured_llm = llm.with_structured_output(CitedAnswer)
 
         rag_chain_from_docs = (
                 prompt
                 | structured_llm
-                | StrOutputParser()
         )
 
         return (
@@ -113,6 +111,30 @@ class RAGPipeline:
         results = self.rag_chain.batch(queries)
 
         if return_dict:
+            # Keep the original results for the return_dict case
             return results
         else:
-            return [result['answer'] for result in results]
+            # Format answers with citations
+            formatted_results = []
+            for result in results:
+                answer = result['answer']
+                citations = result['citations']
+                docs = result['docs']
+                
+                # Format the answer with citations
+                formatted_answer = answer
+                
+                # Add citation block
+                if citations:
+                    formatted_answer += "\n\nCitations:\n"
+                    for citation_idx in citations:
+                        if citation_idx < len(docs):
+                            doc = docs[citation_idx]
+                            # Use document ID and title from metadata if available
+                            doc_id = doc.metadata.get('id', f'doc-{citation_idx}')
+                            doc_title = doc.metadata.get('title', f'Document {citation_idx}')
+                            formatted_answer += f"[{citation_idx}] {doc_id}: {doc_title}\n"
+                
+                formatted_results.append(formatted_answer)
+            
+            return formatted_results

@@ -23,10 +23,13 @@ from .types import QuotedAnswer, CitedAnswer
 from ..utils import load_config
 
 DEFAULT_PROMPT = """\
-Use the following context to answer the questions. If none of the context answer the question, just say you don't know.
+Use the following context to answer the question. Include citations in your answer by referencing document numbers in square brackets like [0], [1], etc.
+If you can't find the answer in the provided context, just say you don't know.
 
 Context:
 {context}
+
+Remember to cite your sources for every piece of information using the document numbers in square brackets [0], [1], etc.
 """
 
 @dataclass
